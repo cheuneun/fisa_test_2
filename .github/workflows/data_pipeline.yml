@@ -1,29 +1,4 @@
-name: Data Pipeline Cron
-
-on:
-  schedule:
-    - cron: '*/5 * * * *'  # 5분마다 자동 실행
-  push:
-    branches:
-      - main               # 푸시할 때마다 실행
-  workflow_dispatch:       # 수동 실행 버튼 활성화
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - name: Install dependencies
-        run: pip install requests
-
-      - name: Run Pipeline Script
+- name: Run Pipeline Script
         env:
           MY_NAME: "최하은"
         run: |
@@ -40,9 +15,9 @@ jobs:
           response = requests.get(url)
           if response.status_code == 200:
               data = response.json()
-              # 환경 변수를 사용하여 정확한 경로에 파일 생성
+              
               file_name = f"{os.environ['MY_NAME']}_test.json"
-              file_path = f"/tmp/{file_name}"
+              file_path = f"./{file_name}"
               
               existing_data = []
               if os.path.exists(file_path):
@@ -65,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.MY_NAME }}_test_result
-          path: /tmp/${{ env.MY_NAME }}_test.json
+          path: ./${{ env.MY_NAME }}_test.json
