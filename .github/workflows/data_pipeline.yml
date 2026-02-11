@@ -1,0 +1,64 @@
+name: Data Pipeline Cron
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  push:
+    branches:
+      - main
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run Pipeline Script
+        env:
+          MY_NAME: "최하은"
+        run: |
+          python <<EOF
+          import requests
+          import json
+          import os
+          from datetime import datetime
+
+          now = datetime.now()
+          minute = now.minute
+          url = f"https://jsonplaceholder.typicode.com/todos/{minute + 1}"
+          
+          response = requests.get(url)
+          if response.status_code == 200:
+              data = response.json()
+              file_path = f"/tmp/{os.environ['MY_NAME']}_test.json"
+              
+              existing_data = []
+              if os.path.exists(file_path):
+                  with open(file_path, 'r', encoding='utf-8') as f:
+                      try:
+                          existing_data = json.load(f)
+                      except json.JSONDecodeError:
+                          existing_data = []
+              
+              existing_data.append(data)
+              
+              with open(file_path, 'w', encoding='utf-8') as f:
+                  json.dump(existing_data, f, ensure_ascii=False, indent=4)
+              print(f"Data saved to {file_path}")
+          EOF
+          
+      - name: Upload result file
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.MY_NAME }}_test.json
+          path: /tmp/${{ env.MY_NAME }}_test.json
